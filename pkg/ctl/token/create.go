@@ -128,6 +128,7 @@ func create(vc *cmdutils.VerbCmd) {
 			"The secret key is base64 encoded or not.")
 		cobra.MarkFlagRequired(set, "subject")
 	})
+	vc.EnableOutputFlagSet()
 }
 
 func doCreate(vc *cmdutils.VerbCmd, args *createCmdArgs) error {
@@ -225,5 +226,6 @@ func parseSigningKeyData(args *createCmdArgs) (interface{}, error) {
 			return nil, errors.New("invalid type of the signature algorithm")
 		}
 	}
-	return nil, errors.New("unknown error")
+
+	return nil, errors.New("no way to decode the signature key was found")
 }

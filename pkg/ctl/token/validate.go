@@ -141,6 +141,7 @@ func validate(vc *cmdutils.VerbCmd) {
 		set.BoolVar(&args.base64Encoded, "base64", false,
 			"The secret key is base64 encoded or not.")
 	})
+	vc.EnableOutputFlagSet()
 }
 
 func doValidate(vc *cmdutils.VerbCmd, args *validateCmdArgs) error {
@@ -257,5 +258,6 @@ func readValidateKeyData(args *validateCmdArgs) (interface{}, error) {
 			return keypair.DecodeECDSAPublicKey(data)
 		}
 	}
-	return nil, errors.New("unknown error")
+
+	return nil, errors.New("no matching decoder found")
 }

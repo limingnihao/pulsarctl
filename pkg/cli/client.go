@@ -35,7 +35,10 @@ type Client struct {
 }
 
 func (c *Client) newRequest(method, path string) (*request, error) {
-	base, _ := url.Parse(c.ServiceURL)
+	base, err := url.Parse(c.ServiceURL)
+	if err != nil {
+		return nil, err
+	}
 	u, err := url.Parse(path)
 	if err != nil {
 		return nil, err
@@ -277,10 +280,13 @@ func (c *Client) PostWithMultiPart(endpoint string, in interface{}, body io.Read
 	return nil
 }
 
-func (c *Client) PostWithQueryParams(endpoint string, params map[string]string) error {
+func (c *Client) PostWithQueryParams(endpoint string, in interface{}, params map[string]string) error {
 	req, err := c.newRequest(http.MethodPost, endpoint)
 	if err != nil {
 		return err
+	}
+	if in != nil {
+		req.obj = in
 	}
 	if params != nil {
 		query := req.url.Query()
@@ -358,12 +364,11 @@ func endpoint(parts ...string) string {
 
 // encodeJSONBody is used to JSON encode a body
 func encodeJSONBody(obj interface{}) (io.Reader, error) {
-	buf := bytes.NewBuffer(nil)
-	enc := json.NewEncoder(buf)
-	if err := enc.Encode(obj); err != nil {
+	b, err := json.Marshal(obj)
+	if err != nil {
 		return nil, err
 	}
-	return buf, nil
+	return bytes.NewReader(b), nil
 }
 
 // decodeJSONBody is used to JSON decode a body
@@ -385,23 +390,23 @@ func safeRespClose(resp *http.Response) {
 
 // responseError is used to parse a response into a client error
 func responseError(resp *http.Response) error {
-	var e Error
+	e := Error{
+		Code:   resp.StatusCode,
+		Reason: resp.Status,
+	}
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		e.Reason = err.Error()
-		e.Code = resp.StatusCode
 		return e
 	}
 
 	err = json.Unmarshal(body, &e)
 	if err != nil {
-		e.Reason = string(body)
-	}
-
-	e.Code = resp.StatusCode
-
-	if e.Reason == "" {
-		e.Reason = unknownErrorReason
+		if len(body) != 0 {
+			e.Reason = string(body)
+		}
+		return e
 	}
 
 	return e

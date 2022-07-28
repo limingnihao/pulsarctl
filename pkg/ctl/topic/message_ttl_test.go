@@ -25,6 +25,8 @@ import (
 )
 
 func TestMessageTTL(t *testing.T) {
+	t.Skipf("Refactoring with gomega")
+
 	topicName := "persistent://public/default/test-message-ttl-topic"
 	args := []string{"create", topicName, "1"}
 	_, execErr, _, _ := TestTopicCommands(CreateTopicCmd, args)
@@ -52,7 +54,7 @@ func TestMessageTTL(t *testing.T) {
 	assert.Nil(t, execErr)
 	assert.Equal(t, getOut.String(), "0")
 
-	// test negative value for ttl arg
+	// test negative value
 	setTTLArgs = []string{"set-message-ttl", topicName, "-t", "-2"}
 	_, execErr, _, _ = TestTopicCommands(SetMessageTTLCmd, setTTLArgs)
 	assert.NotNil(t, execErr)

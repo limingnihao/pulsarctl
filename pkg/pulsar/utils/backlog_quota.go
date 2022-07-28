@@ -20,22 +20,20 @@ package utils
 import "github.com/pkg/errors"
 
 type BacklogQuota struct {
-	Limit  int64           `json:"limit"`
-	Policy RetentionPolicy `json:"policy"`
+	LimitTime int64           `json:"limitTime"`
+	LimitSize int64           `json:"limitSize"`
+	Policy    RetentionPolicy `json:"policy"`
 }
 
-func NewBacklogQuota(limit int64, policy RetentionPolicy) BacklogQuota {
+func NewBacklogQuota(limitSize int64, limitTime int64, policy RetentionPolicy) BacklogQuota {
 	return BacklogQuota{
-		Limit:  limit,
-		Policy: policy,
+		LimitSize: limitSize,
+		LimitTime: limitTime,
+		Policy:    policy,
 	}
 }
 
 type RetentionPolicy string
-
-type BacklogQuotaType string
-
-const DestinationStorage BacklogQuotaType = "destination_storage"
 
 const (
 	ProducerRequestHold     RetentionPolicy = "producer_request_hold"
@@ -45,6 +43,8 @@ const (
 
 func ParseRetentionPolicy(str string) (RetentionPolicy, error) {
 	switch str {
+	case ProducerRequestHold.String():
+		return ProducerRequestHold, nil
 	case ProducerException.String():
 		return ProducerException, nil
 	case ConsumerBacklogEviction.String():
@@ -56,4 +56,28 @@ func ParseRetentionPolicy(str string) (RetentionPolicy, error) {
 
 func (s RetentionPolicy) String() string {
 	return string(s)
+}
+
+type BacklogQuotaType string
+
+const (
+	DestinationStorage BacklogQuotaType = "destination_storage"
+	MessageAge         BacklogQuotaType = "message_age"
+)
+
+func ParseBacklogQuotaType(str string) (BacklogQuotaType, error) {
+	switch str {
+	case "":
+		fallthrough
+	case DestinationStorage.String():
+		return DestinationStorage, nil
+	case MessageAge.String():
+		return MessageAge, nil
+	default:
+		return "", errors.Errorf("Invalid backlog quota type: %s", str)
+	}
+}
+
+func (b BacklogQuotaType) String() string {
+	return string(b)
 }

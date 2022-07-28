@@ -155,6 +155,13 @@ func updateSinksCmd(vc *cmdutils.VerbCmd) {
 			"Pulsar source subscription name if user wants a specific subscription-name for input-topic consumer")
 
 		flagSet.StringVar(
+			&sinkData.SubsPosition,
+			"subs-position",
+			"",
+			"Pulsar source subscription position if user wants to consume messages from the specified location. "+
+				"Possible Values: [Latest, Earliest]")
+
+		flagSet.StringVar(
 			&sinkData.CustomSerdeInputString,
 			"custom-serde-inputs",
 			"",
@@ -242,7 +249,14 @@ func updateSinksCmd(vc *cmdutils.VerbCmd) {
 			"timeout-ms",
 			0,
 			"The message timeout in milliseconds")
+
+		flagSet.BoolVar(
+			&sinkData.UpdateAuthData,
+			"update-auth-data",
+			false,
+			"Whether or not to update the auth data")
 	})
+	vc.EnableOutputFlagSet()
 }
 
 func doUpdateSink(vc *cmdutils.VerbCmd, sinkData *util.SinkData) error {

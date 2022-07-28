@@ -116,6 +116,114 @@ type Topics interface {
 
 	// RemoveMaxProducers Remove max number of producers for a topic
 	RemoveMaxProducers(utils.TopicName) error
+
+	// GetMaxConsumers Get max number of consumers for a topic
+	GetMaxConsumers(utils.TopicName) (int, error)
+
+	// SetMaxConsumers Set max number of consumers for a topic
+	SetMaxConsumers(utils.TopicName, int) error
+
+	// RemoveMaxConsumers Remove max number of consumers for a topic
+	RemoveMaxConsumers(utils.TopicName) error
+
+	// GetMaxUnackMessagesPerConsumer Get max unacked messages policy on consumer for a topic
+	GetMaxUnackMessagesPerConsumer(utils.TopicName) (int, error)
+
+	// SetMaxUnackMessagesPerConsumer Set max unacked messages policy on consumer for a topic
+	SetMaxUnackMessagesPerConsumer(utils.TopicName, int) error
+
+	// RemoveMaxUnackMessagesPerConsumer Remove max unacked messages policy on consumer for a topic
+	RemoveMaxUnackMessagesPerConsumer(utils.TopicName) error
+
+	// GetMaxUnackMessagesPerSubscription Get max unacked messages policy on subscription for a topic
+	GetMaxUnackMessagesPerSubscription(utils.TopicName) (int, error)
+
+	// SetMaxUnackMessagesPerSubscription Set max unacked messages policy on subscription for a topic
+	SetMaxUnackMessagesPerSubscription(utils.TopicName, int) error
+
+	// RemoveMaxUnackMessagesPerSubscription Remove max unacked messages policy on subscription for a topic
+	RemoveMaxUnackMessagesPerSubscription(utils.TopicName) error
+
+	// GetPersistence Get the persistence policies for a topic
+	GetPersistence(utils.TopicName) (*utils.PersistenceData, error)
+
+	// SetPersistence Set the persistence policies for a topic
+	SetPersistence(utils.TopicName, utils.PersistenceData) error
+
+	// RemovePersistence Remove the persistence policies for a topic
+	RemovePersistence(utils.TopicName) error
+
+	// GetDelayedDelivery Get the delayed delivery policy for a topic
+	GetDelayedDelivery(utils.TopicName) (*utils.DelayedDeliveryData, error)
+
+	// SetDelayedDelivery Set the delayed delivery policy on a topic
+	SetDelayedDelivery(utils.TopicName, utils.DelayedDeliveryData) error
+
+	// RemoveDelayedDelivery Remove the delayed delivery policy on a topic
+	RemoveDelayedDelivery(utils.TopicName) error
+
+	// GetDispatchRate Get message dispatch rate for a topic
+	GetDispatchRate(utils.TopicName) (*utils.DispatchRateData, error)
+
+	// SetDispatchRate Set message dispatch rate for a topic
+	SetDispatchRate(utils.TopicName, utils.DispatchRateData) error
+
+	// RemoveDispatchRate Remove message dispatch rate for a topic
+	RemoveDispatchRate(utils.TopicName) error
+
+	// GetPublishRate Get message publish rate for a topic
+	GetPublishRate(utils.TopicName) (*utils.PublishRateData, error)
+
+	// SetPublishRate Set message publish rate for a topic
+	SetPublishRate(utils.TopicName, utils.PublishRateData) error
+
+	// RemovePublishRate Remove message publish rate for a topic
+	RemovePublishRate(utils.TopicName) error
+
+	// GetDeduplicationStatus Get the deduplication policy for a topic
+	GetDeduplicationStatus(utils.TopicName) (bool, error)
+
+	// SetDeduplicationStatus Set the deduplication policy for a topic
+	SetDeduplicationStatus(utils.TopicName, bool) error
+
+	// RemoveDeduplicationStatus Remove the deduplication policy for a topic
+	RemoveDeduplicationStatus(utils.TopicName) error
+
+	// GetRetention returns the retention configuration for a topic
+	GetRetention(utils.TopicName, bool) (*utils.RetentionPolicies, error)
+
+	// RemoveRetention removes the retention configuration on a topic
+	RemoveRetention(utils.TopicName) error
+
+	// SetRetention sets the retention policy for a topic
+	SetRetention(utils.TopicName, utils.RetentionPolicies) error
+
+	// Get the compaction threshold for a topic
+	GetCompactionThreshold(topic utils.TopicName, applied bool) (int64, error)
+
+	// Set the compaction threshold for a topic
+	SetCompactionThreshold(topic utils.TopicName, threshold int64) error
+
+	// Remove compaction threshold for a topic
+	RemoveCompactionThreshold(utils.TopicName) error
+
+	// GetBacklogQuotaMap returns backlog quota map for a topic
+	GetBacklogQuotaMap(topic utils.TopicName, applied bool) (map[utils.BacklogQuotaType]utils.BacklogQuota, error)
+
+	// SetBacklogQuota sets a backlog quota for a topic
+	SetBacklogQuota(utils.TopicName, utils.BacklogQuota, utils.BacklogQuotaType) error
+
+	// RemoveBacklogQuota removes a backlog quota policy from a topic
+	RemoveBacklogQuota(utils.TopicName, utils.BacklogQuotaType) error
+
+	// GetInactiveTopicPolicies gets the inactive topic policies on a topic
+	GetInactiveTopicPolicies(topic utils.TopicName, applied bool) (utils.InactiveTopicPolicies, error)
+
+	// RemoveInactiveTopicPolicies removes inactive topic policies from a topic
+	RemoveInactiveTopicPolicies(utils.TopicName) error
+
+	// SetInactiveTopicPolicies sets the inactive topic policies on a topic
+	SetInactiveTopicPolicies(topic utils.TopicName, data utils.InactiveTopicPolicies) error
 }
 
 type topics struct {
@@ -125,6 +233,9 @@ type topics struct {
 	nonPersistentPath string
 	lookupPath        string
 }
+
+// Check whether the topics struct implements the Topics interface.
+var _ Topics = &topics{}
 
 // Topics is used to access the topics endpoints
 func (c *pulsarClient) Topics() Topics {
@@ -139,10 +250,13 @@ func (c *pulsarClient) Topics() Topics {
 
 func (t *topics) Create(topic utils.TopicName, partitions int) error {
 	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "partitions")
+	data := &partitions
 	if partitions == 0 {
 		endpoint = t.pulsar.endpoint(t.basePath, topic.GetRestPath())
+		data = nil
 	}
-	return t.pulsar.Client.Put(endpoint, partitions)
+
+	return t.pulsar.Client.Put(endpoint, data)
 }
 
 func (t *topics) Delete(topic utils.TopicName, force bool, nonPartitioned bool) error {
@@ -287,7 +401,7 @@ func (t *topics) GetPartitionedStats(topic utils.TopicName, perPartition bool) (
 func (t *topics) Terminate(topic utils.TopicName) (utils.MessageID, error) {
 	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "terminate")
 	var messageID utils.MessageID
-	err := t.pulsar.Client.PostWithObj(endpoint, "", &messageID)
+	err := t.pulsar.Client.PostWithObj(endpoint, nil, &messageID)
 	return messageID, err
 }
 
@@ -305,12 +419,12 @@ func (t *topics) OffloadStatus(topic utils.TopicName) (utils.OffloadProcessStatu
 
 func (t *topics) Unload(topic utils.TopicName) error {
 	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "unload")
-	return t.pulsar.Client.Put(endpoint, "")
+	return t.pulsar.Client.Put(endpoint, nil)
 }
 
 func (t *topics) Compact(topic utils.TopicName) error {
 	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "compaction")
-	return t.pulsar.Client.Put(endpoint, "")
+	return t.pulsar.Client.Put(endpoint, nil)
 }
 
 func (t *topics) CompactStatus(topic utils.TopicName) (utils.LongRunningProcessStatus, error) {
@@ -331,7 +445,7 @@ func (t *topics) SetMessageTTL(topic utils.TopicName, messageTTL int) error {
 	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "messageTTL")
 	var params = make(map[string]string)
 	params["messageTTL"] = strconv.Itoa(messageTTL)
-	err := t.pulsar.Client.PostWithQueryParams(endpoint, params)
+	err := t.pulsar.Client.PostWithQueryParams(endpoint, nil, params)
 	return err
 }
 
@@ -360,4 +474,225 @@ func (t *topics) RemoveMaxProducers(topic utils.TopicName) error {
 	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "maxProducers")
 	err := t.pulsar.Client.Delete(endpoint)
 	return err
+}
+
+func (t *topics) GetMaxConsumers(topic utils.TopicName) (int, error) {
+	var maxConsumers int
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "maxConsumers")
+	err := t.pulsar.Client.Get(endpoint, &maxConsumers)
+	return maxConsumers, err
+}
+
+func (t *topics) SetMaxConsumers(topic utils.TopicName, maxConsumers int) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "maxConsumers")
+	err := t.pulsar.Client.Post(endpoint, &maxConsumers)
+	return err
+}
+
+func (t *topics) RemoveMaxConsumers(topic utils.TopicName) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "maxConsumers")
+	err := t.pulsar.Client.Delete(endpoint)
+	return err
+}
+
+func (t *topics) GetMaxUnackMessagesPerConsumer(topic utils.TopicName) (int, error) {
+	var maxNum int
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "maxUnackedMessagesOnConsumer")
+	err := t.pulsar.Client.Get(endpoint, &maxNum)
+	return maxNum, err
+}
+
+func (t *topics) SetMaxUnackMessagesPerConsumer(topic utils.TopicName, maxUnackedNum int) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "maxUnackedMessagesOnConsumer")
+	return t.pulsar.Client.Post(endpoint, &maxUnackedNum)
+}
+
+func (t *topics) RemoveMaxUnackMessagesPerConsumer(topic utils.TopicName) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "maxUnackedMessagesOnConsumer")
+	return t.pulsar.Client.Delete(endpoint)
+}
+
+func (t *topics) GetMaxUnackMessagesPerSubscription(topic utils.TopicName) (int, error) {
+	var maxNum int
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "maxUnackedMessagesOnSubscription")
+	err := t.pulsar.Client.Get(endpoint, &maxNum)
+	return maxNum, err
+}
+
+func (t *topics) SetMaxUnackMessagesPerSubscription(topic utils.TopicName, maxUnackedNum int) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "maxUnackedMessagesOnSubscription")
+	return t.pulsar.Client.Post(endpoint, &maxUnackedNum)
+}
+
+func (t *topics) RemoveMaxUnackMessagesPerSubscription(topic utils.TopicName) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "maxUnackedMessagesOnSubscription")
+	return t.pulsar.Client.Delete(endpoint)
+}
+
+func (t *topics) GetPersistence(topic utils.TopicName) (*utils.PersistenceData, error) {
+	var persistenceData utils.PersistenceData
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "persistence")
+	err := t.pulsar.Client.Get(endpoint, &persistenceData)
+	return &persistenceData, err
+}
+
+func (t *topics) SetPersistence(topic utils.TopicName, persistenceData utils.PersistenceData) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "persistence")
+	return t.pulsar.Client.Post(endpoint, &persistenceData)
+}
+
+func (t *topics) RemovePersistence(topic utils.TopicName) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "persistence")
+	return t.pulsar.Client.Delete(endpoint)
+}
+
+func (t *topics) GetDelayedDelivery(topic utils.TopicName) (*utils.DelayedDeliveryData, error) {
+	var delayedDeliveryData utils.DelayedDeliveryData
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "delayedDelivery")
+	err := t.pulsar.Client.Get(endpoint, &delayedDeliveryData)
+	return &delayedDeliveryData, err
+}
+
+func (t *topics) SetDelayedDelivery(topic utils.TopicName, delayedDeliveryData utils.DelayedDeliveryData) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "delayedDelivery")
+	return t.pulsar.Client.Post(endpoint, &delayedDeliveryData)
+}
+
+func (t *topics) RemoveDelayedDelivery(topic utils.TopicName) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "delayedDelivery")
+	return t.pulsar.Client.Delete(endpoint)
+}
+
+func (t *topics) GetDispatchRate(topic utils.TopicName) (*utils.DispatchRateData, error) {
+	var dispatchRateData utils.DispatchRateData
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "dispatchRate")
+	err := t.pulsar.Client.Get(endpoint, &dispatchRateData)
+	return &dispatchRateData, err
+}
+
+func (t *topics) SetDispatchRate(topic utils.TopicName, dispatchRateData utils.DispatchRateData) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "dispatchRate")
+	return t.pulsar.Client.Post(endpoint, &dispatchRateData)
+}
+
+func (t *topics) RemoveDispatchRate(topic utils.TopicName) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "dispatchRate")
+	return t.pulsar.Client.Delete(endpoint)
+}
+
+func (t *topics) GetPublishRate(topic utils.TopicName) (*utils.PublishRateData, error) {
+	var publishRateData utils.PublishRateData
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "publishRate")
+	err := t.pulsar.Client.Get(endpoint, &publishRateData)
+	return &publishRateData, err
+}
+
+func (t *topics) SetPublishRate(topic utils.TopicName, publishRateData utils.PublishRateData) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "publishRate")
+	return t.pulsar.Client.Post(endpoint, &publishRateData)
+}
+
+func (t *topics) RemovePublishRate(topic utils.TopicName) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "publishRate")
+	return t.pulsar.Client.Delete(endpoint)
+}
+func (t *topics) GetDeduplicationStatus(topic utils.TopicName) (bool, error) {
+	var enabled bool
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "deduplicationEnabled")
+	err := t.pulsar.Client.Get(endpoint, &enabled)
+	return enabled, err
+}
+
+func (t *topics) SetDeduplicationStatus(topic utils.TopicName, enabled bool) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "deduplicationEnabled")
+	return t.pulsar.Client.Post(endpoint, enabled)
+}
+func (t *topics) RemoveDeduplicationStatus(topic utils.TopicName) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "deduplicationEnabled")
+	return t.pulsar.Client.Delete(endpoint)
+}
+
+func (t *topics) GetRetention(topic utils.TopicName, applied bool) (*utils.RetentionPolicies, error) {
+	var policy utils.RetentionPolicies
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "retention")
+	_, err := t.pulsar.Client.GetWithQueryParams(endpoint, &policy, map[string]string{
+		"applied": strconv.FormatBool(applied),
+	}, true)
+	return &policy, err
+}
+
+func (t *topics) RemoveRetention(topic utils.TopicName) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "retention")
+	return t.pulsar.Client.Delete(endpoint)
+}
+
+func (t *topics) SetRetention(topic utils.TopicName, data utils.RetentionPolicies) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "retention")
+	return t.pulsar.Client.Post(endpoint, data)
+}
+
+func (t *topics) GetCompactionThreshold(topic utils.TopicName, applied bool) (int64, error) {
+	var threshold int64
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "compactionThreshold")
+	_, err := t.pulsar.Client.GetWithQueryParams(endpoint, &threshold, map[string]string{
+		"applied": strconv.FormatBool(applied),
+	}, true)
+	return threshold, err
+}
+
+func (t *topics) SetCompactionThreshold(topic utils.TopicName, threshold int64) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "compactionThreshold")
+	err := t.pulsar.Client.Post(endpoint, threshold)
+	return err
+}
+
+func (t *topics) RemoveCompactionThreshold(topic utils.TopicName) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "compactionThreshold")
+	err := t.pulsar.Client.Delete(endpoint)
+	return err
+}
+
+func (t *topics) GetBacklogQuotaMap(topic utils.TopicName, applied bool) (map[utils.BacklogQuotaType]utils.BacklogQuota,
+	error) {
+	var backlogQuotaMap map[utils.BacklogQuotaType]utils.BacklogQuota
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "backlogQuotaMap")
+
+	queryParams := map[string]string{"applied": strconv.FormatBool(applied)}
+	_, err := t.pulsar.Client.GetWithQueryParams(endpoint, &backlogQuotaMap, queryParams, true)
+
+	return backlogQuotaMap, err
+}
+
+func (t *topics) SetBacklogQuota(topic utils.TopicName, backlogQuota utils.BacklogQuota,
+	backlogQuotaType utils.BacklogQuotaType) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "backlogQuota")
+	params := make(map[string]string)
+	params["backlogQuotaType"] = string(backlogQuotaType)
+	return t.pulsar.Client.PostWithQueryParams(endpoint, &backlogQuota, params)
+}
+
+func (t *topics) RemoveBacklogQuota(topic utils.TopicName, backlogQuotaType utils.BacklogQuotaType) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "backlogQuota")
+	return t.pulsar.Client.DeleteWithQueryParams(endpoint, map[string]string{
+		"backlogQuotaType": string(backlogQuotaType),
+	})
+}
+
+func (t *topics) GetInactiveTopicPolicies(topic utils.TopicName, applied bool) (utils.InactiveTopicPolicies, error) {
+	var out utils.InactiveTopicPolicies
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "inactiveTopicPolicies")
+	_, err := t.pulsar.Client.GetWithQueryParams(endpoint, &out, map[string]string{
+		"applied": strconv.FormatBool(applied),
+	}, true)
+	return out, err
+}
+
+func (t *topics) RemoveInactiveTopicPolicies(topic utils.TopicName) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "inactiveTopicPolicies")
+	return t.pulsar.Client.Delete(endpoint)
+}
+
+func (t *topics) SetInactiveTopicPolicies(topic utils.TopicName, data utils.InactiveTopicPolicies) error {
+	endpoint := t.pulsar.endpoint(t.basePath, topic.GetRestPath(), "inactiveTopicPolicies")
+	return t.pulsar.Client.Post(endpoint, data)
 }

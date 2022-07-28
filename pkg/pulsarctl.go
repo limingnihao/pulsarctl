@@ -28,6 +28,7 @@ import (
 	"github.com/streamnative/pulsarctl/pkg/ctl/functionsworker"
 	"github.com/streamnative/pulsarctl/pkg/ctl/namespace"
 	"github.com/streamnative/pulsarctl/pkg/ctl/nsisolationpolicy"
+	"github.com/streamnative/pulsarctl/pkg/ctl/packages"
 	"github.com/streamnative/pulsarctl/pkg/ctl/plugin"
 	"github.com/streamnative/pulsarctl/pkg/ctl/resourcequotas"
 	"github.com/streamnative/pulsarctl/pkg/ctl/subscription"
@@ -56,12 +57,16 @@ func NewPulsarctlCmd() *cobra.Command {
 		Use:   "pulsarctl [command]",
 		Short: "a CLI for Apache Pulsar",
 		Run: func(cmd *cobra.Command, _ []string) {
+			if v, err := cmd.Flags().GetBool("version"); err == nil && v {
+				cmdutils.PrintVersionInfo()
+				return
+			}
 			if err := cmd.Help(); err != nil {
 				logger.Debug("ignoring error %q", err.Error())
 			}
 		},
 	}
-
+	rootCmd.PersistentFlags().BoolP("version", "V", false, "show the pulsarctl version informantion")
 	rootCmd.PersistentFlags().BoolP("help", "h", false, "help for this command")
 	rootCmd.PersistentFlags().StringVarP(
 		&colorValue,
@@ -75,8 +80,6 @@ func NewPulsarctlCmd() *cobra.Command {
 		"v",
 		3,
 		"set log level, use 0 to silence, 4 for debugging")
-	// add the common pulsarctl flags
-	rootCmd.PersistentFlags().AddFlagSet(cmdutils.PulsarCtlConfig.FlagSet())
 
 	cobra.OnInitialize(func() {
 		// Control colored output
@@ -125,6 +128,7 @@ func NewPulsarctlCmd() *cobra.Command {
 	rootCmd.AddCommand(functionsworker.Command(flagGrouping))
 	rootCmd.AddCommand(token.Command(flagGrouping))
 	rootCmd.AddCommand(context.Command(flagGrouping))
+	rootCmd.AddCommand(packages.Command(flagGrouping))
 
 	// bookkeeper related commands
 	rootCmd.AddCommand(bkctl.Command(flagGrouping))

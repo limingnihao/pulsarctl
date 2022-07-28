@@ -5,7 +5,8 @@
 *.so
 *.dylib
 pulsarctl
-api-examples.jar
+bin/
+test/functions/api-examples.jar
 dummyExample.jar
 pulsar-io-kafka-2.4.0.nar
 kafka-clients-0.10.2.1.jar
@@ -32,3 +33,8 @@ site/gen-pulsarctldocs/generators/build/*
 # Binary distribution
 pulsarctl*.tar.gz
 pulsarctl-site-*.tar.gz
+release
+dist
+
+# Vscode
+.vscode

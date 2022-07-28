@@ -390,48 +390,48 @@ func (s *sinks) GetSinkStatusWithID(tenant, namespace, sink string, id int) (uti
 
 func (s *sinks) RestartSink(tenant, namespace, sink string) error {
 	endpoint := s.pulsar.endpoint(s.basePath, tenant, namespace, sink)
-	return s.pulsar.Client.Post(endpoint+"/restart", "")
+	return s.pulsar.Client.Post(endpoint+"/restart", nil)
 }
 
 func (s *sinks) RestartSinkWithID(tenant, namespace, sink string, instanceID int) error {
 	id := fmt.Sprintf("%d", instanceID)
 	endpoint := s.pulsar.endpoint(s.basePath, tenant, namespace, sink, id)
 
-	return s.pulsar.Client.Post(endpoint+"/restart", "")
+	return s.pulsar.Client.Post(endpoint+"/restart", nil)
 }
 
 func (s *sinks) StopSink(tenant, namespace, sink string) error {
 	endpoint := s.pulsar.endpoint(s.basePath, tenant, namespace, sink)
-	return s.pulsar.Client.Post(endpoint+"/stop", "")
+	return s.pulsar.Client.Post(endpoint+"/stop", nil)
 }
 
 func (s *sinks) StopSinkWithID(tenant, namespace, sink string, instanceID int) error {
 	id := fmt.Sprintf("%d", instanceID)
 	endpoint := s.pulsar.endpoint(s.basePath, tenant, namespace, sink, id)
 
-	return s.pulsar.Client.Post(endpoint+"/stop", "")
+	return s.pulsar.Client.Post(endpoint+"/stop", nil)
 }
 
 func (s *sinks) StartSink(tenant, namespace, sink string) error {
 	endpoint := s.pulsar.endpoint(s.basePath, tenant, namespace, sink)
-	return s.pulsar.Client.Post(endpoint+"/start", "")
+	return s.pulsar.Client.Post(endpoint+"/start", nil)
 }
 
 func (s *sinks) StartSinkWithID(tenant, namespace, sink string, instanceID int) error {
 	id := fmt.Sprintf("%d", instanceID)
 	endpoint := s.pulsar.endpoint(s.basePath, tenant, namespace, sink, id)
 
-	return s.pulsar.Client.Post(endpoint+"/start", "")
+	return s.pulsar.Client.Post(endpoint+"/start", nil)
 }
 
 func (s *sinks) GetBuiltInSinks() ([]*utils.ConnectorDefinition, error) {
 	var connectorDefinition []*utils.ConnectorDefinition
-	endpoint := s.pulsar.endpoint(s.basePath, "builtinSinks")
+	endpoint := s.pulsar.endpoint(s.basePath, "builtinsinks")
 	err := s.pulsar.Client.Get(endpoint, &connectorDefinition)
 	return connectorDefinition, err
 }
 
 func (s *sinks) ReloadBuiltInSinks() error {
 	endpoint := s.pulsar.endpoint(s.basePath, "reloadBuiltInSinks")
-	return s.pulsar.Client.Post(endpoint, "")
+	return s.pulsar.Client.Post(endpoint, nil)
 }

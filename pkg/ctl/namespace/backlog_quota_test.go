@@ -32,8 +32,14 @@ func TestBacklogQuota(t *testing.T) {
 	assert.Equal(t, createOut.String(), "Created public/test-backlog-namespace successfully\n")
 
 	args = []string{"set-backlog-quota", "public/test-backlog-namespace",
-		"--limit", "2G", "--policy", "producer_request_hold"}
+		"--limit-size", "2G", "--policy", "producer_request_hold"}
 	setOut, execErr, _, _ := TestNamespaceCommands(setBacklogQuota, args)
+	assert.Nil(t, execErr)
+	assert.Equal(t, setOut.String(), "Set backlog quota successfully for [public/test-backlog-namespace]\n")
+
+	args = []string{"set-backlog-quota", "public/test-backlog-namespace",
+		"--limit-size", "1G", "--limit-time", "12345", "--policy", "consumer_backlog_eviction", "--type", "message_age"}
+	setOut, execErr, _, _ = TestNamespaceCommands(setBacklogQuota, args)
 	assert.Nil(t, execErr)
 	assert.Equal(t, setOut.String(), "Set backlog quota successfully for [public/test-backlog-namespace]\n")
 
@@ -44,11 +50,12 @@ func TestBacklogQuota(t *testing.T) {
 	err = json.Unmarshal(getOut.Bytes(), &backlogQuotaMap)
 	assert.Nil(t, err)
 
-	for key, value := range backlogQuotaMap {
-		assert.Equal(t, key, utils.DestinationStorage)
-		assert.Equal(t, value.Limit, int64(2147483648))
-		assert.Equal(t, value.Policy, utils.ProducerRequestHold)
-	}
+	assert.Equal(t, 2, len(backlogQuotaMap))
+	assert.Equal(t, backlogQuotaMap[utils.DestinationStorage].LimitSize, int64(2147483648))
+	assert.Equal(t, backlogQuotaMap[utils.DestinationStorage].Policy, utils.ProducerRequestHold)
+	assert.Equal(t, backlogQuotaMap[utils.MessageAge].LimitSize, int64(1073741824))
+	assert.Equal(t, backlogQuotaMap[utils.MessageAge].LimitTime, int64(12345))
+	assert.Equal(t, backlogQuotaMap[utils.MessageAge].Policy, utils.ConsumerBacklogEviction)
 
 	delArgs := []string{"remove-backlog-quota", "public/test-backlog-namespace"}
 	delOut, execErr, _, _ := TestNamespaceCommands(removeBacklogQuota, delArgs)
@@ -58,7 +65,7 @@ func TestBacklogQuota(t *testing.T) {
 
 func TestFailureBacklogQuota(t *testing.T) {
 	args := []string{"set-backlog-quota", "public/test-backlog-namespace",
-		"--limit", "12M", "--policy", "no-support-policy"}
+		"--limit-size", "12M", "--policy", "no-support-policy"}
 	_, execErr, _, _ := TestNamespaceCommands(setBacklogQuota, args)
 	assert.NotNil(t, execErr)
 	assert.Equal(t, execErr.Error(), "invalid retention policy type: no-support-policy")

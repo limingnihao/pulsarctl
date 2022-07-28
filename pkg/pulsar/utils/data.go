@@ -95,54 +95,55 @@ type TenantData struct {
 }
 
 type SourceData struct {
-	Tenant                   string  `json:"tenant"`
-	Namespace                string  `json:"namespace"`
-	Name                     string  `json:"name"`
-	SourceType               string  `json:"sourceType"`
-	ProcessingGuarantees     string  `json:"processingGuarantees"`
-	DestinationTopicName     string  `json:"destinationTopicName"`
-	DeserializationClassName string  `json:"deserializationClassName"`
-	SchemaType               string  `json:"schemaType"`
-	Parallelism              int     `json:"parallelism"`
-	Archive                  string  `json:"archive"`
-	ClassName                string  `json:"className"`
-	SourceConfigFile         string  `json:"sourceConfigFile"`
-	CPU                      float64 `json:"cpu"`
-	RAM                      int64   `json:"ram"`
-	Disk                     int64   `json:"disk"`
-	SourceConfigString       string  `json:"sourceConfigString"`
+	Tenant                   string  `json:"tenant,omitempty"`
+	Namespace                string  `json:"namespace,omitempty"`
+	Name                     string  `json:"name,omitempty"`
+	SourceType               string  `json:"sourceType,omitempty"`
+	ProcessingGuarantees     string  `json:"processingGuarantees,omitempty"`
+	DestinationTopicName     string  `json:"destinationTopicName,omitempty"`
+	DeserializationClassName string  `json:"deserializationClassName,omitempty"`
+	SchemaType               string  `json:"schemaType,omitempty"`
+	Parallelism              int     `json:"parallelism,omitempty"`
+	Archive                  string  `json:"archive,omitempty"`
+	ClassName                string  `json:"className,omitempty"`
+	SourceConfigFile         string  `json:"sourceConfigFile,omitempty"`
+	CPU                      float64 `json:"cpu,omitempty"`
+	RAM                      int64   `json:"ram,omitempty"`
+	Disk                     int64   `json:"disk,omitempty"`
+	SourceConfigString       string  `json:"sourceConfigString,omitempty"`
 
-	SourceConf *SourceConfig `json:"-"`
-	InstanceID string        `json:"instanceId"`
+	SourceConf *SourceConfig `json:"-,omitempty"`
+	InstanceID string        `json:"instanceId,omitempty"`
 
-	UpdateAuthData bool `json:"updateAuthData"`
+	UpdateAuthData bool `json:"updateAuthData,omitempty"`
 }
 
 type SinkData struct {
-	UpdateAuthData          bool        `json:"updateAuthData"`
-	RetainOrdering          bool        `json:"retainOrdering"`
-	AutoAck                 bool        `json:"autoAck"`
-	Parallelism             int         `json:"parallelism"`
-	RAM                     int64       `json:"ram"`
-	Disk                    int64       `json:"disk"`
-	TimeoutMs               int64       `json:"timeoutMs"`
-	CPU                     float64     `json:"cpu"`
-	Tenant                  string      `json:"tenant"`
-	Namespace               string      `json:"namespace"`
-	Name                    string      `json:"name"`
-	SinkType                string      `json:"sinkType"`
-	Inputs                  string      `json:"inputs"`
-	TopicsPattern           string      `json:"topicsPattern"`
-	SubsName                string      `json:"subsName"`
-	CustomSerdeInputString  string      `json:"customSerdeInputString"`
-	CustomSchemaInputString string      `json:"customSchemaInputString"`
-	ProcessingGuarantees    string      `json:"processingGuarantees"`
-	Archive                 string      `json:"archive"`
-	ClassName               string      `json:"className"`
-	SinkConfigFile          string      `json:"sinkConfigFile"`
-	SinkConfigString        string      `json:"sinkConfigString"`
-	InstanceID              string      `json:"instanceId"`
-	SinkConf                *SinkConfig `json:"-"`
+	UpdateAuthData          bool        `json:"updateAuthData,omitempty"`
+	RetainOrdering          bool        `json:"retainOrdering,omitempty"`
+	AutoAck                 bool        `json:"autoAck,omitempty"`
+	Parallelism             int         `json:"parallelism,omitempty"`
+	RAM                     int64       `json:"ram,omitempty"`
+	Disk                    int64       `json:"disk,omitempty"`
+	TimeoutMs               int64       `json:"timeoutMs,omitempty"`
+	CPU                     float64     `json:"cpu,omitempty"`
+	Tenant                  string      `json:"tenant,omitempty"`
+	Namespace               string      `json:"namespace,omitempty"`
+	Name                    string      `json:"name,omitempty"`
+	SinkType                string      `json:"sinkType,omitempty"`
+	Inputs                  string      `json:"inputs,omitempty"`
+	TopicsPattern           string      `json:"topicsPattern,omitempty"`
+	SubsName                string      `json:"subsName,omitempty"`
+	SubsPosition            string      `json:"subsPosition,omitempty"`
+	CustomSerdeInputString  string      `json:"customSerdeInputString,omitempty"`
+	CustomSchemaInputString string      `json:"customSchemaInputString,omitempty"`
+	ProcessingGuarantees    string      `json:"processingGuarantees,omitempty"`
+	Archive                 string      `json:"archive,omitempty"`
+	ClassName               string      `json:"className,omitempty"`
+	SinkConfigFile          string      `json:"sinkConfigFile,omitempty"`
+	SinkConfigString        string      `json:"sinkConfigString,omitempty"`
+	InstanceID              string      `json:"instanceId,omitempty"`
+	SinkConf                *SinkConfig `json:"-,omitempty"`
 }
 
 // Topic data
@@ -171,7 +172,9 @@ type NamespacesData struct {
 	ClusterIds                     string   `json:"clusterIds"`
 	RetentionTimeStr               string   `json:"retentionTimeStr"`
 	LimitStr                       string   `json:"limitStr"`
+	LimitTime                      int64    `json:"limitTime"`
 	PolicyStr                      string   `json:"policyStr"`
+	BacklogQuotaType               string   `json:"backlogQuotaType"`
 	AntiAffinityGroup              string   `json:"antiAffinityGroup"`
 	Tenant                         string   `json:"tenant"`
 	Cluster                        string   `json:"cluster"`
@@ -361,4 +364,34 @@ type ResourceQuotaData struct {
 	BandwidthOut int64  `json:"bandwidthOut"`
 	Memory       int64  `json:"memory"`
 	Dynamic      bool   `json:"dynamic"`
+}
+
+type PersistenceData struct {
+	BookkeeperEnsemble             int64   `json:"bookkeeperEnsemble"`
+	BookkeeperWriteQuorum          int64   `json:"bookkeeperWriteQuorum"`
+	BookkeeperAckQuorum            int64   `json:"bookkeeperAckQuorum"`
+	ManagedLedgerMaxMarkDeleteRate float64 `json:"managedLedgerMaxMarkDeleteRate"`
+}
+
+type DelayedDeliveryCmdData struct {
+	Enable                 bool   `json:"enable"`
+	Disable                bool   `json:"disable"`
+	DelayedDeliveryTimeStr string `json:"delayedDeliveryTimeStr"`
+}
+
+type DelayedDeliveryData struct {
+	TickTime float64 `json:"tickTime"`
+	Active   bool    `json:"active"`
+}
+
+type DispatchRateData struct {
+	DispatchThrottlingRateInMsg  int64 `json:"dispatchThrottlingRateInMsg"`
+	DispatchThrottlingRateInByte int64 `json:"dispatchThrottlingRateInByte"`
+	RatePeriodInSecond           int64 `json:"ratePeriodInSecond"`
+	RelativeToPublishRate        bool  `json:"relativeToPublishRate"`
+}
+
+type PublishRateData struct {
+	PublishThrottlingRateInMsg  int64 `json:"publishThrottlingRateInMsg"`
+	PublishThrottlingRateInByte int64 `json:"publishThrottlingRateInByte"`
 }

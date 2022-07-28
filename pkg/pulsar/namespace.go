@@ -71,7 +71,7 @@ type Namespaces interface {
 	GetBacklogQuotaMap(namespace string) (map[utils.BacklogQuotaType]utils.BacklogQuota, error)
 
 	// SetBacklogQuota sets a backlog quota for all the topics on a namespace
-	SetBacklogQuota(namespace string, backlogQuota utils.BacklogQuota) error
+	SetBacklogQuota(namespace string, backlogQuota utils.BacklogQuota, backlogQuotaType utils.BacklogQuotaType) error
 
 	// RemoveBacklogQuota removes a backlog quota policy from a namespace
 	RemoveBacklogQuota(namespace string) error
@@ -253,6 +253,18 @@ type Namespaces interface {
 	// GetDispatchRate returns Message-dispatch-rate (topics under this namespace can dispatch
 	// this many messages per second)
 	GetDispatchRate(namespace utils.NameSpaceName) (utils.DispatchRate, error)
+
+	// SetPublishRate sets the maximum rate or number of messages that producers can publish to topics in this namespace
+	SetPublishRate(namespace utils.NameSpaceName, pubRate utils.PublishRate) error
+
+	// GetPublishRate gets the maximum rate or number of messages that producer can publish to topics in the namespace
+	GetPublishRate(namespace utils.NameSpaceName) (utils.PublishRate, error)
+
+	// SetIsAllowAutoUpdateSchema sets whether to allow auto update schema on a namespace
+	SetIsAllowAutoUpdateSchema(namespace utils.NameSpaceName, isAllowAutoUpdateSchema bool) error
+
+	// GetIsAllowAutoUpdateSchema gets whether to allow auto update schema on a namespace
+	GetIsAllowAutoUpdateSchema(namespace utils.NameSpaceName) (bool, error)
 }
 
 type namespaces struct {
@@ -401,13 +413,16 @@ func (n *namespaces) GetBacklogQuotaMap(namespace string) (map[utils.BacklogQuot
 	return backlogQuotaMap, err
 }
 
-func (n *namespaces) SetBacklogQuota(namespace string, backlogQuota utils.BacklogQuota) error {
+func (n *namespaces) SetBacklogQuota(namespace string, backlogQuota utils.BacklogQuota,
+	backlogQuotaType utils.BacklogQuotaType) error {
 	nsName, err := utils.GetNamespaceName(namespace)
 	if err != nil {
 		return err
 	}
 	endpoint := n.pulsar.endpoint(n.basePath, nsName.String(), "backlogQuota")
-	return n.pulsar.Client.Post(endpoint, &backlogQuota)
+	params := make(map[string]string)
+	params["backlogQuotaType"] = string(backlogQuotaType)
+	return n.pulsar.Client.PostWithQueryParams(endpoint, &backlogQuota, params)
 }
 
 func (n *namespaces) RemoveBacklogQuota(namespace string) error {
@@ -438,12 +453,10 @@ func (n *namespaces) SetSchemaValidationEnforced(namespace utils.NameSpaceName, 
 }
 
 func (n *namespaces) GetSchemaValidationEnforced(namespace utils.NameSpaceName) (bool, error) {
+	var result bool
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "schemaValidationEnforced")
-	r, err := n.pulsar.Client.GetWithQueryParams(endpoint, nil, nil, false)
-	if err != nil {
-		return false, err
-	}
-	return strconv.ParseBool(string(r))
+	err := n.pulsar.Client.Get(endpoint, &result)
+	return result, err
 }
 
 func (n *namespaces) SetSchemaAutoUpdateCompatibilityStrategy(namespace utils.NameSpaceName,
@@ -454,7 +467,6 @@ func (n *namespaces) SetSchemaAutoUpdateCompatibilityStrategy(namespace utils.Na
 
 func (n *namespaces) GetSchemaAutoUpdateCompatibilityStrategy(namespace utils.NameSpaceName) (
 	utils.SchemaCompatibilityStrategy, error) {
-
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "schemaAutoUpdateCompatibilityStrategy")
 	b, err := n.pulsar.Client.GetWithQueryParams(endpoint, nil, nil, false)
 	if err != nil {
@@ -478,12 +490,10 @@ func (n *namespaces) SetOffloadDeleteLag(namespace utils.NameSpaceName, timeMs i
 }
 
 func (n *namespaces) GetOffloadDeleteLag(namespace utils.NameSpaceName) (int64, error) {
+	var result int64
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "offloadDeletionLagMs")
-	b, err := n.pulsar.Client.GetWithQueryParams(endpoint, nil, nil, false)
-	if err != nil {
-		return -1, err
-	}
-	return strconv.ParseInt(string(b), 10, 64)
+	err := n.pulsar.Client.Get(endpoint, &result)
+	return result, err
 }
 
 func (n *namespaces) SetMaxConsumersPerSubscription(namespace utils.NameSpaceName, max int) error {
@@ -492,12 +502,10 @@ func (n *namespaces) SetMaxConsumersPerSubscription(namespace utils.NameSpaceNam
 }
 
 func (n *namespaces) GetMaxConsumersPerSubscription(namespace utils.NameSpaceName) (int, error) {
+	var result int
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "maxConsumersPerSubscription")
-	b, err := n.pulsar.Client.GetWithQueryParams(endpoint, nil, nil, false)
-	if err != nil {
-		return -1, err
-	}
-	return strconv.Atoi(string(b))
+	err := n.pulsar.Client.Get(endpoint, &result)
+	return result, err
 }
 
 func (n *namespaces) SetOffloadThreshold(namespace utils.NameSpaceName, threshold int64) error {
@@ -506,12 +514,10 @@ func (n *namespaces) SetOffloadThreshold(namespace utils.NameSpaceName, threshol
 }
 
 func (n *namespaces) GetOffloadThreshold(namespace utils.NameSpaceName) (int64, error) {
+	var result int64
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "offloadThreshold")
-	b, err := n.pulsar.Client.GetWithQueryParams(endpoint, nil, nil, false)
-	if err != nil {
-		return -1, err
-	}
-	return strconv.ParseInt(string(b), 10, 64)
+	err := n.pulsar.Client.Get(endpoint, &result)
+	return result, err
 }
 
 func (n *namespaces) SetMaxConsumersPerTopic(namespace utils.NameSpaceName, max int) error {
@@ -520,12 +526,10 @@ func (n *namespaces) SetMaxConsumersPerTopic(namespace utils.NameSpaceName, max 
 }
 
 func (n *namespaces) GetMaxConsumersPerTopic(namespace utils.NameSpaceName) (int, error) {
+	var result int
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "maxConsumersPerTopic")
-	b, err := n.pulsar.Client.GetWithQueryParams(endpoint, nil, nil, false)
-	if err != nil {
-		return -1, err
-	}
-	return strconv.Atoi(string(b))
+	err := n.pulsar.Client.Get(endpoint, &result)
+	return result, err
 }
 
 func (n *namespaces) SetCompactionThreshold(namespace utils.NameSpaceName, threshold int64) error {
@@ -534,12 +538,10 @@ func (n *namespaces) SetCompactionThreshold(namespace utils.NameSpaceName, thres
 }
 
 func (n *namespaces) GetCompactionThreshold(namespace utils.NameSpaceName) (int64, error) {
+	var result int64
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "compactionThreshold")
-	b, err := n.pulsar.Client.GetWithQueryParams(endpoint, nil, nil, false)
-	if err != nil {
-		return -1, err
-	}
-	return strconv.ParseInt(string(b), 10, 64)
+	err := n.pulsar.Client.Get(endpoint, &result)
+	return result, err
 }
 
 func (n *namespaces) SetMaxProducersPerTopic(namespace utils.NameSpaceName, max int) error {
@@ -548,12 +550,10 @@ func (n *namespaces) SetMaxProducersPerTopic(namespace utils.NameSpaceName, max 
 }
 
 func (n *namespaces) GetMaxProducersPerTopic(namespace utils.NameSpaceName) (int, error) {
+	var result int
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "maxProducersPerTopic")
-	b, err := n.pulsar.Client.GetWithQueryParams(endpoint, nil, nil, false)
-	if err != nil {
-		return -1, err
-	}
-	return strconv.Atoi(string(b))
+	err := n.pulsar.Client.Get(endpoint, &result)
+	return result, err
 }
 
 func (n *namespaces) GetNamespaceReplicationClusters(namespace string) ([]string, error) {
@@ -678,7 +678,7 @@ func (n *namespaces) Unload(namespace string) error {
 		return err
 	}
 	endpoint := n.pulsar.endpoint(n.basePath, nsName.String(), "unload")
-	return n.pulsar.Client.Put(endpoint, "")
+	return n.pulsar.Client.Put(endpoint, nil)
 }
 
 func (n *namespaces) UnloadNamespaceBundle(namespace, bundle string) error {
@@ -687,7 +687,7 @@ func (n *namespaces) UnloadNamespaceBundle(namespace, bundle string) error {
 		return err
 	}
 	endpoint := n.pulsar.endpoint(n.basePath, nsName.String(), bundle, "unload")
-	return n.pulsar.Client.Put(endpoint, "")
+	return n.pulsar.Client.Put(endpoint, nil)
 }
 
 func (n *namespaces) SplitNamespaceBundle(namespace, bundle string, unloadSplitBundles bool) error {
@@ -699,7 +699,7 @@ func (n *namespaces) SplitNamespaceBundle(namespace, bundle string, unloadSplitB
 	params := map[string]string{
 		"unload": strconv.FormatBool(unloadSplitBundles),
 	}
-	return n.pulsar.Client.PutWithQueryParams(endpoint, "", nil, params)
+	return n.pulsar.Client.PutWithQueryParams(endpoint, nil, nil, params)
 }
 
 func (n *namespaces) GetNamespacePermissions(namespace utils.NameSpaceName) (map[string][]common.AuthAction, error) {
@@ -748,33 +748,33 @@ func (n *namespaces) SetEncryptionRequiredStatus(namespace utils.NameSpaceName, 
 
 func (n *namespaces) UnsubscribeNamespace(namespace utils.NameSpaceName, sName string) error {
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "unsubscribe", url.QueryEscape(sName))
-	return n.pulsar.Client.Post(endpoint, "")
+	return n.pulsar.Client.Post(endpoint, nil)
 }
 
 func (n *namespaces) UnsubscribeNamespaceBundle(namespace utils.NameSpaceName, bundle, sName string) error {
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), bundle, "unsubscribe", url.QueryEscape(sName))
-	return n.pulsar.Client.Post(endpoint, "")
+	return n.pulsar.Client.Post(endpoint, nil)
 }
 
 func (n *namespaces) ClearNamespaceBundleBacklogForSubscription(namespace utils.NameSpaceName,
 	bundle, sName string) error {
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), bundle, "clearBacklog", url.QueryEscape(sName))
-	return n.pulsar.Client.Post(endpoint, "")
+	return n.pulsar.Client.Post(endpoint, nil)
 }
 
 func (n *namespaces) ClearNamespaceBundleBacklog(namespace utils.NameSpaceName, bundle string) error {
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), bundle, "clearBacklog")
-	return n.pulsar.Client.Post(endpoint, "")
+	return n.pulsar.Client.Post(endpoint, nil)
 }
 
 func (n *namespaces) ClearNamespaceBacklogForSubscription(namespace utils.NameSpaceName, sName string) error {
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "clearBacklog", url.QueryEscape(sName))
-	return n.pulsar.Client.Post(endpoint, "")
+	return n.pulsar.Client.Post(endpoint, nil)
 }
 
 func (n *namespaces) ClearNamespaceBacklog(namespace utils.NameSpaceName) error {
 	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "clearBacklog")
-	return n.pulsar.Client.Post(endpoint, "")
+	return n.pulsar.Client.Post(endpoint, nil)
 }
 
 func (n *namespaces) SetReplicatorDispatchRate(namespace utils.NameSpaceName, rate utils.DispatchRate) error {
@@ -823,4 +823,28 @@ func (n *namespaces) GetDispatchRate(namespace utils.NameSpaceName) (utils.Dispa
 	var rate utils.DispatchRate
 	err := n.pulsar.Client.Get(endpoint, &rate)
 	return rate, err
+}
+
+func (n *namespaces) SetPublishRate(namespace utils.NameSpaceName, pubRate utils.PublishRate) error {
+	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "publishRate")
+	return n.pulsar.Client.Post(endpoint, pubRate)
+}
+
+func (n *namespaces) GetPublishRate(namespace utils.NameSpaceName) (utils.PublishRate, error) {
+	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "publishRate")
+	var pubRate utils.PublishRate
+	err := n.pulsar.Client.Get(endpoint, &pubRate)
+	return pubRate, err
+}
+
+func (n *namespaces) SetIsAllowAutoUpdateSchema(namespace utils.NameSpaceName, isAllowAutoUpdateSchema bool) error {
+	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "isAllowAutoUpdateSchema")
+	return n.pulsar.Client.Post(endpoint, &isAllowAutoUpdateSchema)
+}
+
+func (n *namespaces) GetIsAllowAutoUpdateSchema(namespace utils.NameSpaceName) (bool, error) {
+	endpoint := n.pulsar.endpoint(n.basePath, namespace.String(), "isAllowAutoUpdateSchema")
+	var result bool
+	err := n.pulsar.Client.Get(endpoint, &result)
+	return result, err
 }

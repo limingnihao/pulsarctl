@@ -27,122 +27,133 @@
 
 A CLI tool for the [Apache Pulsar](https://pulsar.incubator.apache.org/) project.
 
-## Available Releases
+## Install pulsarctl
 
-| Version | Reference |
-| --------| --------- |
-| [0.5.0](https://github.com/streamnative/pulsarctl/releases/tag/v0.5.0) | [Command Reference](https://streamnative.io/docs/pulsarctl/v0.5.0/) |
-| [0.4.1](https://github.com/streamnative/pulsarctl/releases/tag/v0.4.1) | [Command Reference](https://streamnative.io/docs/pulsarctl/v0.4.1/) |
-| [0.4.0](https://github.com/streamnative/pulsarctl/releases/tag/v0.4.0) | [Command Reference](https://streamnative.io/docs/pulsarctl/v0.4.0/) |
-| [0.3.0](https://github.com/streamnative/pulsarctl/releases/tag/v0.3.0) | [Command Reference](https://streamnative.io/docs/pulsarctl/v0.3.0/) |
-| [0.2.0](https://github.com/streamnative/pulsarctl/releases/tag/v0.2.0) | [Command Reference](https://streamnative.io/docs/pulsarctl/v0.2.0/) |
-| [0.1.0](https://github.com/streamnative/pulsarctl/releases/tag/v0.1.0) | [Command Reference](https://streamnative.io/docs/pulsarctl/v0.1.0/) |
+### Mac operation system
 
-## Install
-
-#### Mac
-
-You can install `pulsarctl` using [homebrew](https://brew.sh/) on Mac.
-
+Use [homebrew](https://brew.sh/) to install `pulsarctl` on the Mac operation system.
 
 ```bash
 brew tap streamnative/streamnative
-```
-```bash
 brew install pulsarctl
 ```
 
-#### Linux
+### Linux operation system
+
+Use this command to install `pulsarctl` on the Linux operation system.
 
 ```bash
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/streamnative/pulsarctl/master/install.sh)"
 ```
 
-#### Windows
+### Windows operation system
 
-1. Download the executable from https://github.com/streamnative/pulsarctl/releases. 
-2. Add the pulsarctl directory to your system PATH.
-3. Type `pulsarctl -h` at CMD to test pulsarctl is work.
+To install `pulsarctl` on the Windows operation system, follow these steps:
 
-## Build from code
+1. Download the package from [here](https://github.com/streamnative/pulsarctl/releases). 
+2. Add the `pulsarctl` directory to your system PATH.
+3. Type `pulsarctl -h` at CMD to verify that `pulsarctl` is work.
+
+### As project dependency
+
+Use `go get` to install `pulsarctl` as dependency on your project:
+
+```shell
+go get github.com/streamnative/pulsarctl@master
+```
+
+**Note:** We will not release `v0.y.z` tags, so you need to use `master` branch code.
+
+## Build pulsarctl from codes
 
 ### Prerequisite
 
 - Go 1.11 +
 
-If you have not installed Go, install it according to the [installation instruction](http://golang.org/doc/install).
+  If you have not installed Go, install it according to the [installation instruction](http://golang.org/doc/install).
 
-Since the `go mod` package management tool is used in this project, **Go 1.11 or higher** version is required.
+  Since the `go mod` package management tool is used in this project, **Go 1.11 or higher** version is required.
 
-### Download Code
+### Steps
 
-1. Clone the project from GitHub to your local.
+1. Download codes.
 
-```bash
-git clone https://github.com/streamnative/pulsarctl.git
-```
+   1. Clone the project from GitHub to your local.
 
-2. Use `go mod` to get the dependencies needed for the project.
+      ```bash
+      git clone https://github.com/streamnative/pulsarctl.git
+      ```
 
-```bash
-go mod download
-```
+   2. Use `go mod` to get the dependencies needed for the project.
 
-After entering the `go mod download` command, if some libs can not be downloaded, then you can download them by referring to the proxy provided by [GOPROXY.io](https://goproxy.io/).
+      ```bash
+      go mod download
+      ```
 
-### Build
+      After entering the `go mod download` command, if some libs can not be downloaded, then you can download them by referring to the proxy provided by [GOPROXY.io](https://goproxy.io/).
 
-```bash
-export GO111MODULE=on
+2. Build pulsarctl
 
-./build.sh
-```
+    ```bash
+    make pulsarctl
+    ```
 
-If you want to print version of `pulsarctl`, you can use follow commands:
+    If you want to print version of `pulsarctl`, you can use follow commands:
 
-```
-./pulsarctl -version
-```
+    ```
+    bin/pulsarctl --version
+    ```
 
-Output:
+    **Output**:
 
-```
-Version: 0.6.0-SNAPSHOT
-Go Version: go version go1.15.6 darwin/amd64
-Git Commit: 555e6a3076a44c69bd2d1111497515e14f5e302f
-Build Time: Fri May 28 12:13:09 CST 2021
-```
+    ```
+    Release Version: v2.8.0.3
+    Git Commit Hash: add1e586e8d56fcc1cbd2fe94ed75b10d6c54672
+    Git Branch: HEAD
+    UTC Build Time: 2021-06-26 06:39:16
+    Go Version: go version go1.16.3 darwin/amd64
+    ```
 
 ## Enable Auto-Completion
 
 If you want to enable autocompletion in shell, see [enable_completion](docs/en/enable_completion.md).
 
+## Use contexts
+
+If you want to cache information of multiple clusters, and can switch between multiple clusters, see [How to use pulsarctl context](docs/en/how-to-use-context.md).
+
 ## Project Status
 
 The following is an incomplete list of features that are not yet implemented:
  
-#### Functions
+### Functions
+
 - localrun
 
-#### Sources
-- localrun
-- available-sources
-- reload
+### Sources
 
-#### Sinks
 - localrun
 - available-sources
 - reload
 
-#### Schemas
+### Sinks
+
+- localrun
+- available-sources
+- reload
+
+### Schemas
+
 - extract
 
-#### Namespaces
+### Namespaces
+
 - delete-bookie-affinity-group
 - get-bookie-affinity-group
 - set-bookie-affinity-group 
 
-#### Bookies
+### Bookies
+
 - racks-placement
 - get-bookie-rack
 - delete-bookie-rack
@@ -150,7 +161,7 @@ The following is an incomplete list of features that are not yet implemented:
 
 ## Different With Java Pulsar Admin
 
-We move the subscription commands from the Topics to the Subscriptions in pulsarctl.
+We move the subscription commands from the topics to the subscriptions in pulsarctl.
  
 | pulsar-admin | pulsarctl |
 | ------------ | --------- |
